@@ -17,7 +17,11 @@ class CPU:
         self.POP = 0b01000110 # POP
         self.SUB = False
         self.DIV = False
+        self.ADD = 0b10100000 # ADD
+        self.CALL = 0b01010000 # CALL
+        self.RET = 0b00010001 # RET
         self.reg[7] = 0xF4
+
         
     def load(self):
         """Load a program into memory."""
@@ -98,6 +102,10 @@ class CPU:
                 # Increment program counter enough to start the next program
                 self.pc += 3
 
+            elif ir == self.ADD:
+                self.alu("ADD", reg_a, reg_b)
+                self.pc += 3
+
             elif ir == self.SUB:
                 self.alu("SUB", reg_a, reg_b)
                 # Increment program counter enough to start the next program
@@ -133,6 +141,19 @@ class CPU:
                 print(self.reg[register_number])
                 # Increment program counter enough to start the next program
                 self.pc +=2
+
+            elif ir == self.CALL:
+                returnAddress = self.pc + 2
+                self.reg[7] -= 1
+                self.ram[self.reg[7]] = returnAddress
+                self.pc = self.reg[self.ram[self.pc+1]]
+
+            elif ir == self.RET:
+                returnAddress = self.ram[self.reg[7]]
+                self.reg[self.ram[self.pc+1]] = self.ram[self.reg[7]]
+                # Increment stack pointer
+                self.reg[7] += 1
+                self.pc = returnAddress
 
             elif ir == self.HLT:
                 running = False
