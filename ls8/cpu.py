@@ -20,8 +20,12 @@ class CPU:
         self.ADD = 0b10100000 # ADD
         self.CALL = 0b01010000 # CALL
         self.RET = 0b00010001 # RET
+        self.CMP = 0b10100111 # CMP
+        self.JMP = 0b01010100 # JMP
+        self.JNE = 0b01010110 # JNE
+        self.JEQ = 0b01010101 # JEQ
         self.reg[7] = 0xF4
-
+        self.flag = 0b00000000
         
     def load(self):
         """Load a program into memory."""
@@ -60,6 +64,25 @@ class CPU:
             self.reg[reg_a] *= self.reg[reg_b]
         elif op == "DIV":
             self.reg[reg_a] /= self.reg[reg_b]
+        elif op == "CMP":
+            if self.reg[reg_a] == self.reg[reg_b]:
+                self.flag = 0b00000001
+            elif self.reg[reg_a] < self.reg[reg_b]:
+                self.flag = 0b00000100
+            elif self.reg[reg_a] > self.reg[reg_b]:
+                self.flag = 0b00000010
+            else:
+                self.flag = 0b00000000
+        elif op == "SHL":
+            self.reg[reg_a] << self.reg[reg_b]
+        elif op == "SHR":
+            self.reg[reg_a] << self.reg[reg_b]
+        elif op == "OR":
+            self.reg[reg_a] = self.reg[reg_a] | self.reg[reg_b]
+        elif op == "XOR":
+            self.reg[reg_a] = self.reg[reg_a] ^ self.reg[reg_b]
+        elif op == "NOT":
+            self.reg[reg_a] -= 0b11111111
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -154,6 +177,25 @@ class CPU:
                 # Increment stack pointer
                 self.reg[7] += 1
                 self.pc = returnAddress
+
+            elif ir == self.CMP:
+                self.alu("CMP", reg_a, reg_b)
+                self.pc += 3
+        
+            elif ir == self.JMP:
+                self.pc = self.reg[self.ram[self.pc + 1]]
+
+            elif ir == self.JEQ:
+                if self.flag == 0b00000001:
+                    self.pc = self.reg[self.ram[self.pc + 1]]
+                else:
+                    self.pc += 2
+
+            elif ir == self.JNE:
+                if self.flag != 0b00000001:
+                    self.pc = self.reg[self.ram[self.pc + 1]]
+                else:
+                    self.pc += 2
 
             elif ir == self.HLT:
                 running = False
